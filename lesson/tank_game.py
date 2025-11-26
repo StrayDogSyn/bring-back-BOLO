@@ -22,159 +22,57 @@ Author: Code the Dream Python Essentials
 Date: November 2024
 """
 
-# ============================================================
-# SECTION 1: IMPORTS
-# ============================================================
-# We import libraries at the top - like gathering ingredients
-# before cooking. Each library serves a specific purpose:
-#   - pygame: Game engine for graphics, sound, and input
-#   - math: Trigonometry for angles and movement
-#   - random: Randomness for enemy behavior
-#   - typing: Type hints for better code documentation
-
 import pygame
-import math
 import random
+import math
 from typing import List, Tuple
 
-# Initialize pygame - this "wakes up" the game engine
-# Think of it like preheating your oven before cooking
+# Initialize pygame
 pygame.init()
 
+# Constants
+SCREEN_WIDTH = 1160
+SCREEN_HEIGHT = 1160
+WINDOW_WIDTH = SCREEN_WIDTH
+WINDOW_HEIGHT = SCREEN_HEIGHT
+TANK_SIZE = 40
+BULLET_SIZE = 5
+BULLET_SPEED = 10
+ENEMY_SIZE = 30
+ENEMY_SPEED = 2
+OBSTACLE_SIZE = 50
+FPS = 60 # May need adjustment for slower machines
 
-# ============================================================
-# SECTION 2: CONSTANTS (Configuration)
-# ============================================================
-# Constants are variables that DON'T change during the game.
-# By convention, we write them in ALL_CAPS.
-# This makes our code easy to tweak - want a bigger window?
-# Just change these numbers!
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+GRAY = (100, 100, 100)
+YELLOW = (255, 255, 0)
 
-# Window settings
-WINDOW_WIDTH: int = 800   # Game window width in pixels
-WINDOW_HEIGHT: int = 600  # Game window height in pixels
-FPS: int = 60             # Frames per second (game speed)
-
-# Colors are tuples of (Red, Green, Blue) - each value 0-255
-# It's like mixing paint on a palette!
-BLACK: Tuple[int, int, int] = (0, 0, 0)
-WHITE: Tuple[int, int, int] = (255, 255, 255)
-GREEN: Tuple[int, int, int] = (34, 139, 34)      # Forest green for player
-RED: Tuple[int, int, int] = (178, 34, 34)        # Firebrick red for enemies
-GRAY: Tuple[int, int, int] = (128, 128, 128)     # Gray for obstacles
-YELLOW: Tuple[int, int, int] = (255, 215, 0)     # Gold for bullets
-
-# Game balance settings - easy to adjust for difficulty
-PLAYER_SPEED: int = 4           # How fast player moves (pixels per frame)
-PLAYER_ROTATION_SPEED: int = 5  # How fast player turns (degrees per frame)
-BULLET_SPEED: int = 8           # How fast bullets travel
-ENEMY_SPEED: int = 2            # Enemy movement speed
-
-
-# ============================================================
-# SECTION 3: CREATE THE GAME WINDOW
-# ============================================================
-# This creates the actual window you'll see on screen.
-# set_caption gives it a title in the title bar.
-
-screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-pygame.display.set_caption("Tank Battle - Code the Dream")
-
-# The clock helps us control game speed
-# Without this, the game would run as fast as your CPU allows!
+# Set up the display
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Tank Battle")
 clock = pygame.time.Clock()
 
-
-# ============================================================
-# SECTION 4: GAME CLASSES
-# ============================================================
-# Classes are blueprints for game objects.
-# Think of a class like a cookie cutter - it defines the shape,
-# but you can make many cookies (instances) from it.
-
-
 class Tank:
-    """
-    The player's tank.
-    
-    A tank has position, direction, and can move and shoot.
-    This demonstrates object-oriented programming (OOP) basics:
-    - Attributes store data (x, y, angle)
-    - Methods define behavior (move, rotate, shoot)
-    
-    Attributes:
-        x, y: Position on screen (center of tank)
-        angle: Direction tank is facing (in degrees, 0 = right)
-        speed: How fast the tank moves
-        rotation_speed: How fast the tank turns
-        size: Radius of the tank (it's drawn as a circle)
-        color: RGB tuple for tank color
-    """
-    
+    """Player-controlled tank class."""
     def __init__(self, x: int, y: int, color: Tuple[int, int, int]) -> None:
-        """
-        Initialize a new tank.
-        
-        The __init__ method is called automatically when we create
-        a new Tank object. It's like the "birth" of the tank.
-        
-        Args:
-            x: Starting x position (horizontal)
-            y: Starting y position (vertical)
-            color: Tank color as RGB tuple
-        """
-        # Position - where is the tank on the screen?
-        self.x: float = x
-        self.y: float = y
-        
-        # Direction - which way is it facing?
-        # 0 degrees = right, 90 = down, 180 = left, 270 = up
-        self.angle: float = 0
-        
-        # Movement properties
-        self.speed: int = PLAYER_SPEED
-        self.rotation_speed: int = PLAYER_ROTATION_SPEED
-        
-        # Appearance properties
-        self.size: int = 20  # Radius in pixels
-        self.color: Tuple[int, int, int] = color
-    
-    def draw(self, surface: pygame.Surface) -> None:
-        """
-        Draw the tank on the given surface.
-        
-        We draw two shapes:
-        1. A circle for the tank body
-        2. A line for the cannon (shows which way we're aiming)
-        
-        Args:
-            surface: The pygame surface to draw on (usually the screen)
-        """
-        # Draw tank body as a circle
-        pygame.draw.circle(
-            surface,                           # Where to draw
-            self.color,                        # What color
-            (int(self.x), int(self.y)),       # Position (must be integers!)
-            self.size                          # Radius
-        )
-        
-        # Draw cannon - a line pointing in the direction we're facing
-        # We use trigonometry to find the endpoint of the line:
-        #   cos(angle) gives the x component
-        #   sin(angle) gives the y component
-        # math.radians() converts degrees to radians (what trig functions expect)
-        cannon_length: int = self.size + 15
-        end_x: float = self.x + math.cos(math.radians(self.angle)) * cannon_length
-        end_y: float = self.y + math.sin(math.radians(self.angle)) * cannon_length
-        
-        pygame.draw.line(
-            surface,
-            WHITE,
-            (int(self.x), int(self.y)),       # Start at tank center
-            (int(end_x), int(end_y)),         # End at calculated point
-            4                                  # Line thickness in pixels
-        )
-    
+        self.x = x
+        self.y = y
+        self.color = color
+        self.angle = 0
+        self.speed = 5
+        self.rotation_speed = 5
+        self.size = 20
+        self.health = 100
+        self.score = 0
+        self.bullets: List[Bullet] = []
+        self.last_shot = 0
+        self.shot_delay = 500  # milliseconds
+
     def move_forward(self) -> None:
         """
         Move tank forward in the direction it's facing.
@@ -234,6 +132,28 @@ class Tank:
         # min() ensures we're not more than the maximum
         self.x = max(self.size, min(WINDOW_WIDTH - self.size, self.x))
         self.y = max(self.size, min(WINDOW_HEIGHT - self.size, self.y))
+    
+    def draw(self, surface: pygame.Surface) -> None:
+        """Draw the tank with a body and cannon."""
+        # Draw tank body
+        pygame.draw.circle(
+            surface,
+            self.color,
+            (int(self.x), int(self.y)),
+            self.size
+        )
+        
+        # Draw cannon
+        cannon_length = self.size + 15
+        end_x = self.x + math.cos(math.radians(self.angle)) * cannon_length
+        end_y = self.y + math.sin(math.radians(self.angle)) * cannon_length
+        pygame.draw.line(
+            surface,
+            WHITE,
+            (int(self.x), int(self.y)),
+            (int(end_x), int(end_y)),
+            5
+        )
 
 
 class Bullet:
@@ -248,7 +168,8 @@ class Bullet:
         angle: Direction of travel (in degrees)
         speed: How fast it moves
         radius: Size for collision detection
-        color: RGB tuple for bullet color
+      
+  color: RGB tuple for bullet color
     """
     
     def __init__(self, x: float, y: float, angle: float) -> None:
@@ -297,7 +218,6 @@ class Bullet:
                 self.y < 0 or 
                 self.y > WINDOW_HEIGHT)
 
-
 class Obstacle:
     """
     A wall/barrier that blocks movement and bullets.
@@ -328,7 +248,6 @@ class Obstacle:
     def draw(self, surface: pygame.Surface) -> None:
         """Draw the obstacle as a filled rectangle."""
         pygame.draw.rect(surface, self.color, self.rect)
-
 
 class Enemy:
     """
@@ -416,15 +335,8 @@ class Enemy:
             (int(end_x), int(end_y)),
             3
         )
-
-
-# ============================================================
-# SECTION 5: HELPER FUNCTIONS
-# ============================================================
 # Functions that perform specific tasks.
 # These keep our main game loop clean and make code reusable.
-
-
 def check_circle_collision(x1: float, y1: float, r1: int,
                            x2: float, y2: float, r2: int) -> bool:
     """
@@ -487,12 +399,6 @@ def draw_text(surface: pygame.Surface, text: str, x: int, y: int,
     font = pygame.font.Font(None, size)  # None = pygame default font
     text_surface = font.render(text, True, color)  # True = anti-aliasing
     surface.blit(text_surface, (x, y))
-
-
-# ============================================================
-# SECTION 6: MAIN GAME FUNCTION
-# ============================================================
-
 
 def main() -> None:
     """
@@ -692,10 +598,6 @@ def main() -> None:
     # Clean shutdown
     pygame.quit()
 
-
-# ============================================================
-# SECTION 7: PROGRAM ENTRY POINT
-# ============================================================
 # This is a Python convention. When you run a file directly,
 # __name__ is set to "__main__". When you import it, it's not.
 # This lets us use this file as both a runnable program AND
