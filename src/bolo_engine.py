@@ -38,7 +38,25 @@ Color = Tuple[int, int, int]
 # =============================================================================
 
 class Config:
-    """Game configuration - centralized settings for easy tuning."""
+    """
+    Game configuration - centralized settings for easy tuning.
+    
+    Key Bindings:
+    -------------
+    Movement (continuous):
+        W / UP_ARROW    : Move forward
+        S / DOWN_ARROW  : Move backward
+        A / LEFT_ARROW  : Rotate left
+        D / RIGHT_ARROW : Rotate right
+    
+    Actions (single press):
+        SPACE : Fire shell
+        M     : Place mine
+    
+    System (work anytime):
+        ESC : Toggle pause
+        R   : Restart game (works even when dead)
+    """
     
     # Display
     WINDOW_WIDTH: int = 1024
@@ -1041,7 +1059,23 @@ class BoloGame:
                 self._handle_keydown(event.key)
     
     def _handle_keydown(self, key: int) -> None:
-        """Handle single key press events."""
+        """
+        Handle single key press events.
+        
+        Some keys (ESC, R) should work regardless of player state,
+        while others (SPACE, M) require an alive player.
+        """
+        # Global keys - work regardless of player state
+        if key == pygame.K_ESCAPE:
+            self.game_state.paused = not self.game_state.paused
+            return
+        elif key == pygame.K_r:
+            # Restart game - works even when player is dead
+            self.game_state = GameState()
+            self._setup_game()
+            return
+        
+        # Player-specific keys - require alive player
         player = self.game_state.player
         if not player or not player.alive:
             return
@@ -1054,12 +1088,6 @@ class BoloGame:
             mine = player.place_mine(self.game_state)
             if mine:
                 self.game_state.add_entity(mine)
-        elif key == pygame.K_ESCAPE:
-            self.game_state.paused = not self.game_state.paused
-        elif key == pygame.K_r:
-            # Restart game
-            self.game_state = GameState()
-            self._setup_game()
     
     def _update(self) -> None:
         """Update game state."""
@@ -1144,27 +1172,52 @@ class BoloGame:
         if not player:
             return
         
-        # Resource display
-        ui_text = (
-            f"Armor: {player.resources.armor}/{Config.TANK_MAX_ARMOR}  "
-            f"Shells: {player.resources.shells}/{Config.TANK_MAX_SHELLS}  "
-            f"Mines: {player.resources.mines}/{Config.TANK_MAX_MINES}  "
-            f"Wood: {player.resources.wood}/{Config.TANK_MAX_WOOD}"
-        )
-        text_surface = self.font.render(ui_text, True, (255, 255, 255))
-        self.screen.blit(text_surface, (10, 10))
+        # Resource display (only show if player is alive)
+        if player.alive:
+            ui_text = (
+                f"Armor: {player.resources.armor}/{Config.TANK_MAX_ARMOR}  "
+                f"Shells: {player.resources.shells}/{Config.TANK_MAX_SHELLS}  "
+                f"Mines: {player.resources.mines}/{Config.TANK_MAX_MINES}  "
+                f"Wood: {player.resources.wood}/{Config.TANK_MAX_WOOD}"
+            )
+            text_surface = self.font.render(ui_text, True, (255, 255, 255))
+            self.screen.blit(text_surface, (10, 10))
         
         # Controls hint
         controls = "WASD: Move | SPACE: Fire | M: Mine | ESC: Pause | R: Restart"
         controls_surface = self.font.render(controls, True, (200, 200, 200))
         self.screen.blit(controls_surface, (10, Config.WINDOW_HEIGHT - 30))
         
-        # Pause overlay
-        if self.game_state.paused:
-            pause_text = self.font.render("PAUSED", True, (255, 255, 0))
-            self.screen.blit(pause_text, 
-                           (Config.WINDOW_WIDTH // 2 - 40, 
-                            Config.WINDOW_HEIGHT // 2 - 12))
+        # Game Over overlay (when player is dead)
+        if not player.alive:
+            # Semi-transparent overlay
+            overlay = pygame.Surface((Config.WINDOW_WIDTH, Config.WINDOW_HEIGHT))
+            overlay.set_alpha(128)
+            overlay.fill((0, 0, 0))
+            self.screen.blit(overlay, (0, 0))
+            
+            # Game Over text
+            game_over_font = pygame.font.Font(None, 72)
+            game_over_text = game_over_font.render("GAME OVER", True, (255, 50, 50))
+            game_over_rect = game_over_text.get_rect(
+                center=(Config.WINDOW_WIDTH // 2, Config.WINDOW_HEIGHT // 2 - 40)
+            )
+            self.screen.blit(game_over_text, game_over_rect)
+            
+            # Restart instruction
+            restart_text = self.font.render("Press R to Restart", True, (255, 255, 255))
+            restart_rect = restart_text.get_rect(
+                center=(Config.WINDOW_WIDTH // 2, Config.WINDOW_HEIGHT // 2 + 20)
+            )
+            self.screen.blit(restart_text, restart_rect)
+        
+        # Pause overlay (when game is paused and player is alive)
+        elif self.game_state.paused:
+            pause_text = self.font.render("PAUSED - Press ESC to Continue", True, (255, 255, 0))
+            pause_rect = pause_text.get_rect(
+                center=(Config.WINDOW_WIDTH // 2, Config.WINDOW_HEIGHT // 2)
+            )
+            self.screen.blit(pause_text, pause_rect)
 
 
 # =============================================================================
