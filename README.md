@@ -248,5 +248,5 @@ This project is licensed under the **MIT License** - see the [`LICENSE`](LICENSE
 
 **Happy coding! 🎮✨**
 
-*Built with ❤️ for the gaming and Python communities*
+*Built with ❤️ for the Code the Dream and Python communities*
 </div>
