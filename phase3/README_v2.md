@@ -9,10 +9,7 @@
 
 **A faithful, modern reproduction of the classic top-down tank combat game BOLO**
 
-![Game Screenshot](assets/screenshot.png)
-
 *Capturing the nostalgic gameplay of the original 1987 BOLO for modern platforms*
-
 
 </div>
 
